@@ -1,0 +1,21 @@
+---
+// Props from parent
+const { image, category, title, description, link } = Astro.props;
+---
+<article class="hover:border border-gray-500 rounded-2xl hover:shadow-md transition-shadow duration-300">
+    <a href={link}>
+        <img src={image} alt={title} class="w-full h-48 object-cover rounded-t-2xl" loading="lazy" />
+    </a>
+    <div class="p-5">
+        <p class="text-2xl text-gray-600 uppercase font-bold mb-2">{category}</p>
+        <a href={link} class="block">
+            <h3 class="text-xl font-bold text-black mb-2 hover:underline">{title}</h3>
+            <p class="text-xl text-gray-600 italic line-clamp-3">{description}</p>
+        </a>
+        <div class="mt-4">
+            <a href={link} class="text-black hover:underline text-lg font-medium">
+                Read more →
+            </a>
+        </div>
+    </div>
+</article>

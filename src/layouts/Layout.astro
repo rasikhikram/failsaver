@@ -8,12 +8,20 @@ import "../styles/global.css";
 
 <!doctype html>
 <html lang="en">
-    <head>
-        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-    </head>
-    <body>
-        <Header />
-        <slot />
-        <Footer />
-    </body>
+<head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+</head>
+<body class="bg-white text-black">
+<!-- Fixed Navbar -->
+<div class="fixed top-0 left-0 right-0 z-50">
+    <Header />
+</div>
+
+<!-- Main Content with padding equal to navbar height -->
+<main class="pt-[84px]">
+    <slot />
+</main>
+
+<Footer />
+</body>
 </html>

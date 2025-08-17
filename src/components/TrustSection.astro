@@ -1,0 +1,72 @@
+---
+const tweets = [
+    {
+        name: "Madza",
+        username: "@madzaedev",
+        text: "Failory\n\n200+ interviews with the brains behind failed and successful startups. Learn from their wins and their mistakes and become a better founder.",
+        link: "https://failory.com/interviews",
+        date: "12 Feb 2023",
+        img: "/assets/tweets/madza.png", // optional tweet image
+    },
+    {
+        name: "Shi",
+        username: "@shiikoolhz",
+        text: "One of the websites I’ve noticed I’m spending lots of time on lately is Failory & specifically their Startup Cemetery section which analyses why so many startups have failed.\n\nIt’s a big resource for entrepreneurs & startup owners to learn from mistakes etc.",
+        link: "#",
+        date: "19 Feb 2023",
+        img: "/assets/tweets/startup-cemetery.png",
+    },
+    {
+        name: "Igor Momentum",
+        username: "@that_igor_",
+        text: "Few cool newsletters that I recently discovered: @growthinreverse by @chenicole and @hellofailory by @nicoleredina\n\nAlso check @trends_vc by @DruRulv out of bigger ones.",
+        link: "#",
+        date: "4 Sep 2023",
+    },
+    {
+        name: "Devan 🛠 MDE",
+        username: "@devansood",
+        text: "Have seen @hellofailory really great learnings from failures",
+        link: "#",
+        date: "24 Mar 2023",
+    },
+    {
+        name: "Lucas Finítix 🚀",
+        username: "@finitix",
+        text: "TOP 3 newsletters to be subscribed to:\n- Failory’s Newsletter (by @hellofailory)\n- Houck’s Newsletter (by @callmehouck)\n- The modern entrepreneur (by @heyesalo)\n\nThey share FREE EDUCATION every week.",
+        link: "#",
+        date: "31 May 2023",
+    }
+];
+---
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <h1 class="flex flex-col sm:flex-row items-center justify-center text-center leading-tight px-4 text-[36px] sm:text-4xl lg:text-6xl font-extrabold mb-10">
+        Trusted by +40K Founders
+    </h1>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {tweets.map(tweet => (
+                <div class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md transition">
+                    <!-- Top: Name + Username -->
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-14 h-14 bg-gray-200 rounded-full"></div>
+                        <div>
+                            <p class="font-bold text-2xl text-gray-900">{tweet.name}</p>
+                            <p class="text-gray-500 text-lg">{tweet.username}</p>
+                        </div>
+                    </div>
+
+                    <!-- Tweet Text -->
+                    <p class="text-gray-800 text-xl whitespace-pre-line mb-3">{tweet.text}</p>
+
+                    <!-- Optional Image -->
+                    {tweet.img && (
+                            <img src={tweet.img} alt="" class="rounded-lg border border-gray-100 mb-3" />
+                    )}
+
+                    <!-- Footer -->
+                    <p class="text-gray-500 text-lg">{tweet.date}</p>
+                </div>
+        ))}
+    </div>
+</section>
