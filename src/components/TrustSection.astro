@@ -1,4 +1,7 @@
 ---
+import {Image} from "astro:assets";
+import Profile from '../assets/Profile.jpg';
+
 const tweets = [
     {
         name: "Madza",
@@ -6,7 +9,7 @@ const tweets = [
         text: "Failory\n\n200+ interviews with the brains behind failed and successful startups. Learn from their wins and their mistakes and become a better founder.",
         link: "https://failory.com/interviews",
         date: "12 Feb 2023",
-        img: "/assets/tweets/madza.png", // optional tweet image
+        img: "/assets/tweets/startup-cemetery.png",
     },
     {
         name: "Shi",
@@ -49,7 +52,7 @@ const tweets = [
                 <div class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md transition">
                     <!-- Top: Name + Username -->
                     <div class="flex items-center gap-2 mb-2">
-                        <div class="w-14 h-14 bg-gray-200 rounded-full"></div>
+                        <Image src={Profile} alt="Pro" class="w-14 h-14 rounded-full" />
                         <div>
                             <p class="font-bold text-2xl text-gray-900">{tweet.name}</p>
                             <p class="text-gray-500 text-lg">{tweet.username}</p>

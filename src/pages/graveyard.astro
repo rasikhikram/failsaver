@@ -1,8 +1,49 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const logo = "/vine-logo.svg";
-const ghost = "/ghost-icon.svg";
+import {Image} from "astro:assets";
+import Ghost from "../assets/Ghost.png";
+
+import Vine from "../assets/Vine.png";
+import Google from "../assets/Google.jpg"
+import Amazon from "../assets/Amazon.png";
+
+const startups = [
+    {
+        title: "Startup",
+        description: "Learn why +120 startups have shut down and avoid being part of the 90% of businesses that fail.",
+        linkText: "Go to Startup Cemetery →",
+        link: "#",
+        logo: Vine,
+        name: "Vine",
+    },
+    {
+        title: "Google",
+        description: "Google has shut down +100 products and acquired businesses. We're analyzing why each of these failed. Work in progress.",
+        linkText: "Go to Google Cemetery →",
+        link: "#",
+        logo: Google,
+        name: "Google+",
+    },
+    {
+        title: "Amazon",
+        description: "Amazon also had products/services that failed. We're analyzing why each didn’t succeed.",
+        linkText: "Go to Amazon Cemetery →",
+        link: "#",
+        logo: Amazon,
+        name: "Amazon",
+        titleColor: "text-yellow-500"
+    }
+];
+
+const googleTitle = [
+    { letter: "G", color: "text-blue-500" },
+    { letter: "o", color: "text-red-500" },
+    { letter: "o", color: "text-yellow-500" },
+    { letter: "g", color: "text-blue-500" },
+    { letter: "l", color: "text-green-500" },
+    { letter: "e", color: "text-red-500" },
+];
 ---
 
 <Layout>
@@ -34,7 +75,7 @@ const ghost = "/ghost-icon.svg";
                     />
                     <button
                             type="submit"
-                            class="w-full bg-white text-black font-semibold py-4 rounded-md hover:bg-gray-200 transition text-xl font-bold"
+                            class="w-full bg-white text-black font-bold py-4 rounded-md hover:bg-gray-200 transition text-xl font-bold"
                     >
                         Subscribe For Free →
                     </button>
@@ -42,31 +83,47 @@ const ghost = "/ghost-icon.svg";
             </div>
         </section>
 
-        <section class="bg-[#0e0e0e] text-white rounded-lg px-8 lg:py-24 md:p-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8">
-            <!-- Left Side -->
-            <div class="flex-1">
-                <h2 class="text-xl md:text-4xl lg:text-6xl font-extrabold mb-4">Startup Cemetery</h2>
-                <p class="text-gray-400 text-2xl my-8">
-                    Learn why +120 startups have shut down and avoid being part of the 90% of businesses that fail.
-                </p>
-                <a href="#"
-                   class="text-white text-3xl font-bold hover:underline">
-                    Go to Startup Cemetery →
-                </a>
-            </div>
+        <div class="bg-black pb-16">
 
-            <!-- Right Side -->
-            <div class="flex-1 flex justify-center items-center relative">
-                <!-- Ghost -->
-                <img src={ghost} alt="Ghost" class="absolute -right-6 -top-4 w-8 h-8" />
+            {startups.map((startup) => (
+                    <section class="bg-[#0e0e0e] text-white rounded-lg px-8 lg:py-24 md:p-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-6 my-24">
+                        <!-- Left Side -->
+                        <div class="flex-1 ml-16">
+                            <h2 class={`text-xl md:text-4xl lg:text-6xl font-extrabold mb-4 ${startup.titleColor}`}>
+                                {startup.title === "Google" ? (
+                                    googleTitle.map((l) => (
+                                            <span class={l.color}>{l.letter}</span>
+                                    ))
 
-                <!-- Tombstone Card -->
-                <div class="bg-white text-black flex flex-col items-center justify-center rounded-t-[50%] rounded-b-lg p-6 w-40 h-48">
-                    <img src={logo} alt="Vine" class="w-12 h-12 mb-3" />
-                    <h3 class="font-bold">Vine</h3>
-                </div>
-            </div>
-        </section>
+                                ) : (
+                                    startup.title
+                                )}
+                                <span class="text-white">Cemetery</span>
+                            </h2>
+
+                            <p class="text-gray-400 text-2xl my-8">
+                                {startup.description}
+                            </p>
+                            <a href={startup.link}
+                               class="text-white text-3xl font-bold hover:underline">
+                                {startup.linkText}
+                            </a>
+                        </div>
+
+                        <!-- Right Side -->
+                        <div class="flex-1 flex justify-center items-center relative">
+                            <!-- Ghost -->
+                            <Image src={Ghost} alt="Ghost" class="absolute right-18 -top-16 w-32 h-32" />
+
+                            <!-- Tombstone Card -->
+                            <div class="bg-white text-black flex flex-col items-center justify-center rounded-t-[45%] rounded-b-lg p-6 w-52 h-64">
+                                <Image src={startup.logo} alt={startup.name} class="w-20 h-20 mb-5 " />
+                                <h3 class="font-bold text-2xl">{startup.name}</h3>
+                            </div>
+                        </div>
+                    </section>
+            ))}
+        </div>
 
     </div>
 </Layout>

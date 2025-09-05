@@ -1,7 +1,10 @@
 ---
+import { Image } from 'astro:assets';
+import heroPhone from '../assets/hero-phone.png';
+import Profile from '../assets/Profile.jpg';
 ---
 <section class="bg-white">
-    <div class="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+    <div class="max-w-7xl mx-auto px-4 lg:py-16 grid grid-cols-1 lg:grid-cols-5  items-center">
 
         <!-- Left Content: 80% -->
         <div class="lg:col-span-4 space-y-12">
@@ -37,21 +40,33 @@
 
             <!-- Founder Note with Avatar -->
             <div class="mt-6 flex items-start gap-4 justify-center lg:justify-start">
-                <img src="/assets/nico.jpg" alt="Nico" class="w-10 h-10 rounded-full" />
+                <Image src={Profile} alt="Nico" class="w-18 h-18 rounded-full" />
                 <p class="text-sm lg:text-3xl text-gray-700 italic">
-                    <span class=" ">My name is Nico and I'm the founder of Failory.</span>
+                    <span class=" ">My name is Rasikh and I'm the founder of Fail Saver.</span>
                     <span class="font-bold text-black">Join me and <br /> 40,000+ founders</span>, twice a week.
                 </p>
             </div>
         </div>
 
         <!-- Right Image: 20% -->
-        <div class="lg:col-span-1 flex justify-center lg:justify-end mt-10 lg:mt-0">
-            <img
-                    src="/assets/hero-phone.png"
+        <div class="relative lg:col-span-1 flex justify-center lg:justify-end mt-10 lg:mt-0">
+            <Image
+                    width={600}
+                    src={heroPhone}
                     alt="Fail Saver"
                     class="w-full md:max-w-sm"
             />
+            <div class="absolute top-[2.3%] left-[5%] w-[89%] h-[95%] overflow-hidden rounded-[1.5rem]">
+                <iframe
+                        width="315"
+                        height="560"
+                        src=""
+                        title="Video player"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen
+                ></iframe>
+            </div>
         </div>
     </div>
 </section>

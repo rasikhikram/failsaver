@@ -1,28 +1,71 @@
 ---
 import HeaderLink from './HeaderLink.astro';
+
+import {Image} from "astro:assets";
+import Icon from "../assets/Icon.png";
 ---
 
 <header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-	<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-5 flex justify-between items-center">
-		<a href="/" class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-black">
+	<div class="max-w-7xl mx-auto  py-5 flex justify-between items-center">
+		<!-- Logo -->
+		<a href="/" class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-black flex">
+			<Image src={Icon} alt="Icon" class="w-10 h-10 mx-2 mt-2" />
 			Fail Saver
 		</a>
 
 		<!-- Desktop Navigation -->
-		<nav class="hidden md:flex space-x-4 sm:space-x-6 lg:space-x-10 items-center font-bold text-sm sm:text-lg lg:text-2xl">
+		<nav class="hidden sm:flex space-x-4 sm:space-x-6 lg:space-x-10 items-center font-bold text-sm sm:text-lg lg:text-2xl">
 			<HeaderLink href="/interviews">Interviews</HeaderLink>
 			<HeaderLink href="/blogs">Blog</HeaderLink>
 			<HeaderLink href="/graveyard">Graveyard</HeaderLink>
 			<HeaderLink href="/products">Products</HeaderLink>
+			<HeaderLink href="/newpost">New Post</HeaderLink>
+
+
 			<a href="#" class="bg-black text-white px-4 py-2 lg:px-4 lg:py-3 rounded-md text-sm sm:text-base lg:text-xl hover:bg-zinc-800 transition">
 				Subscribe →
 			</a>
 		</nav>
 
-		<!-- Mobile Menu Button (Optional) -->
-		<div class="md:hidden">
-			<!-- Add mobile menu icon / dropdown later if needed -->
-			<button class="text-black focus:outline-none">☰</button>
+		<!-- Mobile Menu Button -->
+		<div class="md:hidden px-4">
+			<button
+				id="menu-btn"
+				class="text-black focus:outline-none text-2xl"
+			>
+				☰
+			</button>
 		</div>
 	</div>
+
+	<!-- Mobile Dropdown Menu -->
+	<div id="mobile-menu" class="md:hidden hidden grid grid-cols-1 bg-white border-t border-gray-200 px-4 py-4 space-y-4 font-bold text-lg">
+		<HeaderLink href="/interviews">Interviews</HeaderLink>
+		<HeaderLink href="/blogs">Blog</HeaderLink>
+		<HeaderLink href="/graveyard">Graveyard</HeaderLink>
+		<HeaderLink href="/products">Products</HeaderLink>
+
+
+		<a href="#" class="block bg-black text-white text-center px-4 py-2 rounded-md hover:bg-zinc-800 transition">
+			Subscribe →
+		</a>
+	</div>
 </header>
+
+<!-- Toggle Script -->
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		const btn = document.getElementById("menu-btn");
+		const menu = document.getElementById("mobile-menu");
+
+		btn.addEventListener("click", () => {
+			menu.classList.toggle("hidden");
+
+			if (btn.textContent.trim() === "☰") {
+				btn.textContent = "✖";
+			} else {
+				btn.textContent = "☰";
+			}
+		});
+	});
+</script>
