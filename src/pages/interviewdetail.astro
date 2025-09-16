@@ -1,0 +1,30 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+import {supabase} from "../lib/supabase.js";
+import InterviewDetail from "../components/InterviewDetail.vue";
+
+const id = Number(Astro.url.searchParams.get("id"));
+
+let post = null;
+if (id) {
+    const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+
+    if (!error) {
+        post = data;
+    }
+}
+---
+
+<Layout>
+{post ? (
+        <InterviewDetail post={post} client:load />
+) : (
+        <p>No post found.</p>
+)}
+</Layout>

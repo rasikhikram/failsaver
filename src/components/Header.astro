@@ -1,5 +1,6 @@
 ---
 import HeaderLink from './HeaderLink.astro';
+import AuthWrapper from '../components/AuthWrapper.vue'
 
 import {Image} from "astro:assets";
 import Icon from "../assets/Icon.png";
@@ -19,8 +20,8 @@ import Icon from "../assets/Icon.png";
 			<HeaderLink href="/blogs">Blog</HeaderLink>
 			<HeaderLink href="/graveyard">Graveyard</HeaderLink>
 			<HeaderLink href="/products">Products</HeaderLink>
-			<HeaderLink href="/newpost">New Post</HeaderLink>
 
+			<AuthWrapper client:only="vue" />
 
 			<a href="#" class="bg-black text-white px-4 py-2 lg:px-4 lg:py-3 rounded-md text-sm sm:text-base lg:text-xl hover:bg-zinc-800 transition">
 				Subscribe →
@@ -39,14 +40,15 @@ import Icon from "../assets/Icon.png";
 	</div>
 
 	<!-- Mobile Dropdown Menu -->
-	<div id="mobile-menu" class="md:hidden hidden grid grid-cols-1 bg-white border-t border-gray-200 px-4 py-4 space-y-4 font-bold text-lg">
+	<div id="mobile-menu" class="md:hidden hidden grid grid-cols-1 place-items-center bg-white border-t border-gray-200 px-4 py-4 space-y-4 font-bold text-lg">
 		<HeaderLink href="/interviews">Interviews</HeaderLink>
 		<HeaderLink href="/blogs">Blog</HeaderLink>
 		<HeaderLink href="/graveyard">Graveyard</HeaderLink>
 		<HeaderLink href="/products">Products</HeaderLink>
 
+		<AuthWrapper client:only="vue" />
 
-		<a href="#" class="block bg-black text-white text-center px-4 py-2 rounded-md hover:bg-zinc-800 transition">
+		<a href="#" class="block bg-black text-white text-center px-4 py-2 rounded-md hover:bg-zinc-800 transition mt-2">
 			Subscribe →
 		</a>
 	</div>

@@ -119,7 +119,7 @@ const getStatusIcon = status => {
 
     <!-- Right Content -->
     <div class="flex flex-col gap-4 flex-1">
-      <div v-for="(item, index) in filteredInterviews" :key="index"
+      <a v-for="(item, index) in filteredInterviews" :key="index" :href="`/interviewdetail?id=${item.id}`"
            class="border-3 border-black rounded-lg p-6 flex flex-col gap-4 transform transition duration-300 hover:scale-105"
       >
         <h2 class="font-bold text-2xl">{{ item.title }}</h2>
@@ -137,7 +137,7 @@ const getStatusIcon = status => {
             <p class="text-lg text-gray-500">{{ item.date }}</p>
           </div>
         </div>
-      </div>
+      </a>
     </div>
   </div>
 </template>

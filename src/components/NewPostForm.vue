@@ -1,7 +1,9 @@
 <script setup>
-import { ref, onBeforeUnmount } from "vue"
+import { ref, onBeforeUnmount, onMounted } from "vue"
 import { Editor, EditorContent } from "@tiptap/vue-3"
 import StarterKit from "@tiptap/starter-kit"
+import Placeholder from "@tiptap/extension-placeholder"
+import Image from "@tiptap/extension-image"
 import { createClient } from "@supabase/supabase-js"
 
 const supabase = createClient(
@@ -15,17 +17,44 @@ const showToast = (message, type = "success") => {
   toast.value = { show: true, message, type }
   setTimeout(() => {
     toast.value.show = false
-  }, 3000) // 3 sec me auto hide
+  }, 3000)
 }
 
+// Popup state
+const showPopup = ref(false)
+const plusButtonStyle = ref({ top: "0px" })
+
 // Editor
-const editor = new Editor({
-  extensions: [StarterKit],
-  content: "<p>Tell your story...</p>",
+const editor = ref(null)
+
+function updatePlusButton() {
+  if (!editor.value) return
+  const { from } = editor.value.state.selection
+  const coords = editor.value.view.coordsAtPos(from)
+  const editorBox = editor.value.view.dom.getBoundingClientRect()
+  plusButtonStyle.value = {
+    top: coords.top - editorBox.top + "px",
+  }
+}
+
+onMounted(() => {
+  editor.value = new Editor({
+    extensions: [
+      StarterKit,
+      Image,
+      Placeholder.configure({
+        placeholder: "Tell your story...",
+      }),
+    ],
+    content: "",
+    onUpdate: updatePlusButton,
+    onSelectionUpdate: updatePlusButton,
+  })
+  updatePlusButton()
 })
 
 onBeforeUnmount(() => {
-  editor.destroy()
+  if (editor.value) editor.value.destroy()
 })
 
 // Form fields
@@ -45,7 +74,7 @@ const submitBlog = async () => {
       author: author.value,
       date: date.value,
       avatar: avatar.value,
-      content: editor.getHTML(),
+      content: editor.value.getHTML(),
     },
   ])
 
@@ -58,30 +87,87 @@ const submitBlog = async () => {
     author.value = ""
     date.value = ""
     avatar.value = ""
-    editor.commands.setContent("<p>Tell your story...</p>")
+    editor.value.commands.setContent("<p></p>")
+  }
+}
+
+// ✅ Image upload handler
+const fileInput = ref(null)
+
+const triggerFileUpload = () => {
+  fileInput.value.click()
+}
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`
+
+  const { error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(fileName, file, { upsert: true })
+
+  if (uploadError) {
+    showToast("❌ Failed to upload image!", "error")
+    return
+  }
+
+  // ✅ get public URL
+  const { data: publicUrlData } = supabase.storage
+      .from("images")
+      .getPublicUrl(fileName)
+
+  const imageUrl = publicUrlData.publicUrl
+
+  // Insert image into editor
+  editor.value.chain().focus().setImage({ src: imageUrl }).run()
+  showPopup.value = false
+}
+
+// ✅ Formatting helpers
+const toggleBold = () => {
+  if (editor.value) {
+    editor.value.chain().focus().toggleBold().run()
+    showPopup.value = false
+  }
+}
+const toggleItalic = () => {
+  if (editor.value) {
+    editor.value.chain().focus().toggleItalic().run()
+    showPopup.value = false
+  }
+}
+const toggleHeading2 = () => {
+  if (editor.value) {
+    editor.value.chain().focus().toggleHeading({ level: 2 }).run()
+    showPopup.value = false
   }
 }
 </script>
 
-
 <template>
   <div class="max-w-3xl mx-auto py-8 px-3 space-y-6">
-    <h1 class="flex items-center justify-center text-3xl lg:text-6xl font-extrabold mb-12">
-      Add New Posts
+    <h1
+        class="flex items-center justify-center text-3xl lg:text-6xl font-extrabold mb-12"
+    >
+      Add New Post
     </h1>
+
     <!-- Title -->
     <input
         v-model="title"
         type="text"
         placeholder="Title"
-        class="w-full text-2xl md:text-4xl font-bold border-0 border-b border-gray-300 focus:ring-0 outline-none"
+        class="w-full text-2xl md:text-3xl font-bold py-2 focus:ring-0 outline-none border-b border-gray-300"
     />
 
     <!-- Status Dropdown -->
     <select
         v-model="status"
-        class="w-full border-b border-gray-300 py-2 text-lg md:text-2xl font-bold text-gray-500"
+        class="w-full py-2 text-lg md:text-2xl font-bold text-gray-500 border-b border-gray-300"
     >
+      <option value="success">Status</option>
       <option value="success">Success</option>
       <option value="failed">Failed</option>
     </select>
@@ -91,93 +177,98 @@ const submitBlog = async () => {
         v-model="tags"
         type="text"
         placeholder="Tags (comma separated)"
-        class="w-full text-base md:text-xl text-gray-500 font-semibold border-0 border-b border-gray-200 focus:ring-0 outline-none"
+        class="w-full text-base md:text-xl placeholder:text-gray-500 py-2 font-semibold border-0 focus:ring-0 outline-none border-b border-gray-300"
     />
 
-    <!-- Toolbar -->
-    <div
-        class="flex flex-wrap gap-2 border border-gray-200 p-3 rounded-lg bg-gray-50 text-sm md:text-base shadow-sm"
-    >
+    <!-- Editor with custom + button -->
+    <div class="relative">
+      <!-- + Button -->
       <button
-          @click="editor.chain().focus().toggleBold().run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-black hover:text-white transition-all duration-200 font-bold"
+          @click="showPopup = !showPopup"
+          class="absolute -left-12 w-10 h-10 rounded-full bg-gray-200 hover:bg-black hover:text-white mt-[5px] flex items-center justify-center transition"
+          :style="plusButtonStyle"
       >
-        B
+        +
       </button>
 
-      <button
-          @click="editor.chain().focus().toggleItalic().run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white italic hover:bg-black hover:text-white transition-all duration-200"
+      <!-- Popup menu -->
+      <div
+          v-if="showPopup"
+          class="absolute -left-40 flex gap-2 bg-white border rounded-lg shadow-md p-2 z-50"
+          :style="plusButtonStyle"
       >
-        i
-      </button>
+        <button
+            @click="toggleBold"
+            :class="[
+            'px-2 py-1 border rounded font-bold',
+            editor?.isActive('bold') ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+          ]"
+        >
+          B
+        </button>
+        <button
+            @click="toggleItalic"
+            :class="[
+            'px-2 py-1 border rounded italic',
+            editor?.isActive('italic') ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+          ]"
+        >
+          i
+        </button>
+        <button
+            @click="toggleHeading2"
+            :class="[
+            'px-2  border rounded font-semibold',
+            editor?.isActive('heading', { level: 2 }) ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+          ]"
+        >
+          H2
+        </button>
+        <!-- ✅ Upload Image Button -->
+        <button
+            @click="triggerFileUpload"
+            class="px-2 py-1 border rounded font-semibold bg-white text-black hover:bg-black hover:text-white"
+        >
+          Img
+        </button>
+        <!-- Hidden file input -->
+        <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            class="hidden"
+            @change="handleFileUpload"
+        />
+      </div>
 
-      <button
-          @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-black hover:text-white transition-all duration-200 font-semibold"
+      <!-- Editor -->
+      <div
+          class="prose max-w-none py-3 rounded-md min-h-[200px] md:min-h-[250px] text-base md:text-xl border-b border-gray-300"
       >
-        H2
-      </button>
-
-      <button
-          @click="editor.chain().focus().toggleBulletList().run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-black hover:text-white transition-all duration-200"
-      >
-        •
-      </button>
-
-      <button
-          @click="editor.chain().focus().toggleOrderedList().run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-black hover:text-white transition-all duration-200"
-      >
-        1.
-      </button>
-
-      <button
-          @click="editor.chain().focus().toggleBlockquote().run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-black hover:text-white transition-all duration-200"
-      >
-        ❝
-      </button>
-
-      <button
-          @click="editor.chain().focus().toggleCodeBlock().run()"
-          class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white font-mono hover:bg-black hover:text-white transition-all duration-200"
-      >
-        &lt;/&gt;
-      </button>
-    </div>
-
-
-
-
-    <!-- Editor -->
-    <div
-        class="prose max-w-none border border-gray-200 p-3 md:p-4 rounded-md min-h-[200px] md:min-h-[250px] text-base md:text-lg"
-    >
-      <EditorContent :editor="editor" />
+        <EditorContent v-if="editor" :editor="editor" />
+      </div>
     </div>
 
     <!-- Footer -->
     <div
-        class="flex flex-col md:flex-row w-full items-center md:justify-between md:space-x-4 space-y-3 md:space-y-0 p-3 md:p-4 text-base md:text-xl border-y border-gray-200"
+        class="flex flex-col md:flex-row w-full items-center md:justify-between md:space-x-24 space-y-3 md:space-y-0 py-1 font-semibold md:py-2 text-base md:text-xl"
     >
       <input
           v-model="author"
           type="text"
           placeholder="Author"
-          class="w-full md:flex-1 border px-3 py-2 rounded"
+          class="w-full md:flex-1 border-b border-gray-300 px-3 py-2 text-center placeholder:text-gray-500"
       />
       <input
           v-model="date"
           type="date"
-          class="w-full md:flex-1 border px-3 py-2 rounded"
+          class="w-full md:flex-1 border-b border-gray-300 px-3 py-2 text-gray-500 text-center"
       />
       <input
           v-model="avatar"
           type="url"
           placeholder="Avatar URL"
-          class="w-full md:flex-1 border px-3 py-2 rounded"
+          class="w-full md:flex-1 border-b border-gray-300 px-3 py-2 text-center"
       />
     </div>
 
@@ -207,11 +298,28 @@ const submitBlog = async () => {
 </template>
 
 <style>
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.ProseMirror {
+  outline: none;
+  border: none;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  font-weight: 600;
+  content: attr(data-placeholder);
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
 </style>
-
