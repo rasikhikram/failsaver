@@ -6,6 +6,9 @@ import Placeholder from "@tiptap/extension-placeholder"
 import Image from "@tiptap/extension-image"
 import { createClient } from "@supabase/supabase-js"
 
+// ✅ Lucide Icons
+import { Bold, Italic, Heading2, Image as ImageIcon } from "lucide-vue-next"
+
 const supabase = createClient(
     import.meta.env.PUBLIC_SUPABASE_URL,
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY
@@ -22,6 +25,8 @@ const showToast = (message, type = "success") => {
 
 // Popup state
 const showPopup = ref(false)
+const popupRef = ref(null)
+const buttonRef = ref(null)
 const plusButtonStyle = ref({ top: "0px" })
 
 // Editor
@@ -34,6 +39,19 @@ function updatePlusButton() {
   const editorBox = editor.value.view.dom.getBoundingClientRect()
   plusButtonStyle.value = {
     top: coords.top - editorBox.top + "px",
+  }
+}
+
+// ✅ close popup if clicked outside
+function handleClickOutside(e) {
+  if (
+      showPopup.value &&
+      popupRef.value &&
+      !popupRef.value.contains(e.target) &&
+      buttonRef.value &&
+      !buttonRef.value.contains(e.target)
+  ) {
+    showPopup.value = false
   }
 }
 
@@ -51,10 +69,13 @@ onMounted(() => {
     onSelectionUpdate: updatePlusButton,
   })
   updatePlusButton()
+
+  document.addEventListener("click", handleClickOutside)
 })
 
 onBeforeUnmount(() => {
   if (editor.value) editor.value.destroy()
+  document.removeEventListener("click", handleClickOutside)
 })
 
 // Form fields
@@ -121,11 +142,21 @@ const handleFileUpload = async (event) => {
   const imageUrl = publicUrlData.publicUrl
 
   // Insert image into editor
-  editor.value.chain().focus().setImage({ src: imageUrl }).run()
+  editor.value
+      .chain()
+      .focus()
+      .setImage({ src: imageUrl })
+      .run()
   showPopup.value = false
 }
 
 // ✅ Formatting helpers
+const toggleQuote = () => {
+  if (editor.value) {
+    editor.value.chain().focus().toggleBlockquote().run()
+    showPopup.value = false
+  }
+}
 const toggleBold = () => {
   if (editor.value) {
     editor.value.chain().focus().toggleBold().run()
@@ -184,8 +215,11 @@ const toggleHeading2 = () => {
     <div class="relative">
       <!-- + Button -->
       <button
+          ref="buttonRef"
           @click="showPopup = !showPopup"
-          class="absolute -left-12 w-10 h-10 rounded-full bg-gray-200 hover:bg-black hover:text-white mt-[5px] flex items-center justify-center transition"
+          class="absolute -left-14 w-10 h-10 rounded-full bg-gradient-to-br from-black to-gray-700
+         text-white shadow-lg hover:scale-110 hover:shadow-xl hover:from-gray-800 hover:to-black
+          flex items-center justify-center text-2xl font-bold"
           :style="plusButtonStyle"
       >
         +
@@ -194,43 +228,58 @@ const toggleHeading2 = () => {
       <!-- Popup menu -->
       <div
           v-if="showPopup"
-          class="absolute -left-40 flex gap-2 bg-white border rounded-lg shadow-md p-2 z-50"
+          ref="popupRef"
+          class="absolute -left-72 flex items-center gap-2 bg-white/90 backdrop-blur-md border shadow-xl rounded-full px-3 py-1 z-50 transition-all"
           :style="plusButtonStyle"
       >
         <button
             @click="toggleBold"
             :class="[
-            'px-2 py-1 border rounded font-bold',
-            editor?.isActive('bold') ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+            'w-8 h-8 flex items-center justify-center rounded-full transition',
+            editor?.isActive('bold') ? 'bg-black text-white' : 'hover:bg-gray-200'
           ]"
         >
-          B
+          <Bold class="w-4 h-4" />
         </button>
+
         <button
             @click="toggleItalic"
             :class="[
-            'px-2 py-1 border rounded italic',
-            editor?.isActive('italic') ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+            'w-8 h-8 flex items-center justify-center rounded-full transition',
+            editor?.isActive('italic') ? 'bg-black text-white' : 'hover:bg-gray-200'
           ]"
         >
-          i
+          <Italic class="w-4 h-4" />
         </button>
+
         <button
             @click="toggleHeading2"
             :class="[
-            'px-2  border rounded font-semibold',
-            editor?.isActive('heading', { level: 2 }) ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+            'w-8 h-8 flex items-center justify-center rounded-full transition',
+            editor?.isActive('heading', { level: 2 }) ? 'bg-black text-white' : 'hover:bg-gray-200'
           ]"
         >
-          H2
+          <Heading2 class="w-4 h-4" />
         </button>
-        <!-- ✅ Upload Image Button -->
+
+        <button
+            @click="toggleQuote"
+            :class="[
+            'w-8 h-8 flex items-center justify-center rounded-full transition',
+            editor?.isActive('blockquote') ? 'bg-black text-white' : 'hover:bg-gray-200'
+          ]"
+        >
+          “”
+        </button>
+
+        <!-- Image -->
         <button
             @click="triggerFileUpload"
-            class="px-2 py-1 border rounded font-semibold bg-white text-black hover:bg-black hover:text-white"
+            class="w-8 h-8 flex items-center justify-center rounded-full transition hover:bg-gray-200"
         >
-          Img
+          <ImageIcon class="w-4 h-4" />
         </button>
+
         <!-- Hidden file input -->
         <input
             type="file"
@@ -321,5 +370,26 @@ const toggleHeading2 = () => {
   float: left;
   pointer-events: none;
   height: 0;
+}
+.ProseMirror blockquote {
+  border-left: 3px solid #000;
+  padding-left: 1em;
+  font-style: italic;
+  font-weight: 500;
+  quotes: "“" "”" "‘" "’";
+}
+.ProseMirror blockquote:before {
+  content: open-quote;
+}
+.ProseMirror blockquote:after {
+  content: close-quote;
+}
+.ProseMirror img {
+  display: block;
+  margin: 1.5rem auto;
+  max-width: 100%;
+  width: 400px;
+  height: auto;
+  border-radius: 12px;
 }
 </style>

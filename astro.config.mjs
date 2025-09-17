@@ -6,13 +6,13 @@ import { defineConfig } from 'astro/config';
 
 import vue from '@astrojs/vue';
 import tailwindcss from '@tailwindcss/vite';
-import vercel from "@astrojs/vercel/static"; // ✅ add this
+import vercel from "@astrojs/vercel/static";
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://example.com',
-  output: "static", // ✅ important for vercel static deploy
-  adapter: vercel(), // ✅ use vercel adapter
+  output: "static",
+  adapter: vercel(),
   integrations: [mdx(), sitemap(), vue()],
 
   vite: {
