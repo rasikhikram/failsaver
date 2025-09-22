@@ -6,7 +6,6 @@ import Placeholder from "@tiptap/extension-placeholder"
 import Image from "@tiptap/extension-image"
 import { createClient } from "@supabase/supabase-js"
 
-// ✅ Lucide Icons
 import { Bold, Italic, Heading2, Image as ImageIcon } from "lucide-vue-next"
 
 const supabase = createClient(
@@ -118,6 +117,32 @@ const fileInput = ref(null)
 const triggerFileUpload = () => {
   fileInput.value.click()
 }
+
+const handleAvatarUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`
+
+  // ✅ Upload avatar to avatars bucket
+  const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(fileName, file, { upsert: true })
+
+  if (uploadError) {
+    showToast("❌ Failed to upload avatar!", "error")
+    return
+  }
+
+  // ✅ get public URL
+  const { data: publicUrlData } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(fileName)
+
+  avatar.value = publicUrlData.publicUrl
+  showToast("✅ Avatar uploaded!", "success")
+}
+
 
 const handleFileUpload = async (event) => {
   const file = event.target.files[0]
@@ -300,26 +325,56 @@ const toggleHeading2 = () => {
 
     <!-- Footer -->
     <div
-        class="flex flex-col md:flex-row w-full items-center md:justify-between md:space-x-24 space-y-3 md:space-y-0 py-1 font-semibold md:py-2 text-base md:text-xl"
+        class="flex flex-col md:flex-row w-full items-center justify-between md:space-x-6 space-y-2 md:space-y-0 py-2 font-semibold text-xl md:text-lg"
     >
-      <input
-          v-model="author"
-          type="text"
-          placeholder="Author"
-          class="w-full md:flex-1 border-b border-gray-300 px-3 py-2 text-center placeholder:text-gray-500"
-      />
-      <input
-          v-model="date"
-          type="date"
-          class="w-full md:flex-1 border-b border-gray-300 px-3 py-2 text-gray-500 text-center"
-      />
-      <input
-          v-model="avatar"
-          type="url"
-          placeholder="Avatar URL"
-          class="w-full md:flex-1 border-b border-gray-300 px-3 py-2 text-center"
-      />
+      <!-- Author -->
+      <div class="w-full md:flex-1 flex flex-col">
+        <input
+            v-model="author"
+            type="text"
+            placeholder="Author Name"
+            class="w-full text-center placeholder:text-gray-600 border-b border-gray-300 px-4 py-2 outline-0"
+        />
+      </div>
+
+      <!-- Date -->
+      <div class="w-full md:flex-1 flex flex-col">
+        <input
+            v-model="date"
+            type="date"
+            class="w-full border-b text-center border-gray-300 px-4 py-2 text-gray-600 outline-0"
+        />
+      </div>
+
+      <!-- Avatar -->
+      <div class="w-full md:flex-1 flex flex-col items-center">
+        <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            @change="handleAvatarUpload"
+            class="hidden"
+        />
+
+        <!-- Custom Button -->
+        <button
+            type="button"
+            @click="$refs.fileInput.click()"
+            class="w-full border-b flex justify-center border-gray-300 px-4 py-2 text-gray-600 font-medium outline-0"
+        >
+          <ImageIcon class="w-5 h-5 mt-1 mr-1"/> Upload Avatar
+        </button>
+
+        <!-- Preview -->
+        <img
+            v-if="avatar"
+            :src="avatar"
+            alt="Preview"
+            class="mt-3 w-20 h-20 rounded-full object-cover"
+        />
+      </div>
     </div>
+
 
     <!-- Publish Button -->
     <div class="flex justify-end">
