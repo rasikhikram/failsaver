@@ -1,0 +1,40 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import StartupMistake from '../../components/StartupMistake.vue';
+import { supabase } from "../../lib/supabase.js";
+
+// yahan se id milegi clean URL se (eg: /startupmistake/3)
+const { id } = Astro.params;
+
+// Convert string → number
+const blogId = id ? Number(id) : null;
+
+console.log("🔍 ID from URL:", blogId, "Type:", typeof blogId);
+
+let blog = null;
+let error = null;
+
+if (blogId) {
+    const { data, error: err } = await supabase
+        .from("blogs")
+        .select("*")
+        .eq("id", blogId)
+        .maybeSingle(); // ek hi row milegi
+
+    blog = data;
+    error = err;
+
+    console.log("✅ Supabase data:", data);
+    console.log("⚠️ Supabase error:", err);
+}
+---
+
+<Layout>
+    {blog ? (
+            <StartupMistake blog={blog} client:load />
+    ) : (
+            <p>No post found.</p>
+    )}
+</Layout>
