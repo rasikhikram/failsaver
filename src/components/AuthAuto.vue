@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue"
 import { supabase } from "../lib/supabase"
 import Logout from "./Logout.vue"
+import UserDashboard from "./UserDashboard.vue"
 
 // Toast logic
 const toast = ref({ show: false, message: "", type: "success" })
@@ -17,18 +18,23 @@ const password = ref("")
 const error = ref("")
 const loading = ref(false)
 const isLoggedIn = ref(false)
+const currentUser = ref(null) // Add this line
 
 // Check login status on mount
 async function checkUser() {
   const { data } = await supabase.auth.getUser()
   isLoggedIn.value = !!data?.user
+  currentUser.value = data?.user // Add this line
 }
+
 onMounted(checkUser)
+
 supabase.auth.onAuthStateChange((_event, session) => {
   isLoggedIn.value = !!session?.user
+  currentUser.value = session?.user // Add this line
 })
 
-// Sign In + Sign Up logic
+// Your existing handleSubmit function stays the same
 async function handleSubmit() {
   error.value = ""
   loading.value = true
@@ -82,7 +88,7 @@ async function logout() {
 <template>
   <div>
     <template v-if="!isLoggedIn">
-      <!-- Sign in / sign up form -->
+      <!-- Your existing sign in form stays exactly the same -->
       <form
           @submit.prevent="handleSubmit"
           class="max-w-7xl mx-auto flex flex-col items-center justify-center space-y-6">
@@ -107,12 +113,16 @@ async function logout() {
         <div v-if="error" class="text-red-500 text-sm mt-2">{{ error }}</div>
       </form>
     </template>
+
     <template v-else>
-      <!-- Logout button (form ki jagah) -->
-      <Logout/>
+      <!-- Replace Logout with UserDashboard + Logout -->
+      <UserDashboard :user="currentUser" />
+      <div class="text-center mt-8">
+        <Logout/>
+      </div>
     </template>
 
-    <!-- ✅ Toast notification -->
+    <!-- Your existing toast notification stays the same -->
     <transition name="fade">
       <div
           v-if="toast.show"
