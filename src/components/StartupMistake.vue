@@ -48,8 +48,8 @@ const props = defineProps({
     </div>
 
     <!-- Main Content -->
-    <div class="prose prose-lg prose-gray max-w-4xl mx-auto">
-      <div v-html="blog.content"></div>
+    <div class="lg:mt-16 mt-4 prose max-w-none">
+      <div v-html="blog.content" class="post-content text-2xl"></div>
     </div>
   </article>
 
@@ -59,57 +59,32 @@ const props = defineProps({
   </div>
 </template>
 
-<style lang="postcss">
-/* Enhanced prose styles for better blog reading */
-.prose {
-  @apply text-gray-800 leading-relaxed;
+<style>
+.post-content blockquote {
+  font-style: italic;
+  font-weight: 500;
+  margin: 1em 0;
+  quotes: "“" "”" "‘" "’";
+  position: relative;
+  display: block;
 }
 
-.prose h1, .prose h2, .prose h3 {
-  @apply text-gray-900 font-bold;
+.post-content blockquote p {
+  display: inline;
 }
 
-.prose h1 {
-  @apply text-4xl mb-6 mt-8;
+.post-content blockquote::before {
+  content: open-quote;
 }
 
-.prose h2 {
-  @apply text-3xl mb-4 mt-8;
+.post-content blockquote::after {
+  content: close-quote;
 }
-
-.prose h3 {
-  @apply text-2xl mb-3 mt-6;
-}
-
-.prose p {
-  @apply mb-6 text-lg leading-relaxed;
-}
-
-.prose blockquote {
-  @apply border-l-4 border-gray-300 pl-6 italic text-gray-700 my-6;
-}
-
-.prose img {
-  @apply rounded-lg shadow-lg my-8 mx-auto;
-}
-
-.prose ul, .prose ol {
-  @apply mb-6 pl-6;
-}
-
-.prose li {
-  @apply mb-2;
-}
-
-.prose a {
-  @apply text-blue-600 hover:text-blue-800 underline;
-}
-
-.prose code {
-  @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono;
-}
-
-.prose pre {
-  @apply bg-gray-900 text-white p-4 rounded-lg overflow-x-auto my-6;
+.post-content img {
+  max-width: 700px;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5em 0;
+  justify-self: center;
 }
 </style>

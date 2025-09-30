@@ -5,6 +5,7 @@ import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
 import Image from "@tiptap/extension-image"
 import { createClient } from "@supabase/supabase-js"
+import { Plugin } from "prosemirror-state"
 
 import { Bold, Italic, Heading2, Image as ImageIcon } from "lucide-vue-next"
 
@@ -54,13 +55,73 @@ function handleClickOutside(e) {
   }
 }
 
+// Helper: upload image to Supabase and return URL
+async function uploadImageToSupabase(file) {
+  const fileName = `content-${Date.now()}-${file.name.replace(/\s+/g, "_")}`
+
+  const { error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(fileName, file, { upsert: true })
+
+  if (uploadError) {
+    console.error("Upload error:", uploadError)
+    showToast("❌ Failed to upload image!", "error")
+    return null
+  }
+
+  const { data: publicUrlData } = supabase.storage
+      .from("images")
+      .getPublicUrl(fileName)
+
+  return publicUrlData.publicUrl
+}
+
 onMounted(() => {
   editor.value = new Editor({
     extensions: [
       StarterKit,
-      Image,
       Placeholder.configure({
         placeholder: "Share your insights and knowledge...",
+      }),
+      Image.extend({
+        addProseMirrorPlugins() {
+          return [
+            new Plugin({
+              props: {
+                handlePaste: (view, event) => {
+                  const items = event.clipboardData?.items
+                  if (!items) return false
+                  for (const item of items) {
+                    if (item.type.indexOf("image") === 0) {
+                      const file = item.getAsFile()
+                      uploadImageToSupabase(file).then((url) => {
+                        if (url) {
+                          this.editor.chain().focus().setImage({ src: url }).run()
+                        }
+                      })
+                      return true
+                    }
+                  }
+                  return false
+                },
+                handleDrop: (view, event) => {
+                  const files = event.dataTransfer?.files
+                  if (!files?.length) return false
+                  Array.from(files).forEach((file) => {
+                    if (file.type.startsWith("image/")) {
+                      uploadImageToSupabase(file).then((url) => {
+                        if (url) {
+                          this.editor.chain().focus().setImage({ src: url }).run()
+                        }
+                      })
+                    }
+                  })
+                  return true
+                },
+              },
+            }),
+          ]
+        },
       }),
     ],
     content: "",
@@ -68,7 +129,6 @@ onMounted(() => {
     onSelectionUpdate: updatePlusButton,
   })
   updatePlusButton()
-
   document.addEventListener("click", handleClickOutside)
 })
 
@@ -77,16 +137,14 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside)
 })
 
-// Blog form fields (matching your blogs table columns)
+// Blog form fields
 const title = ref("")
 const description = ref("")
 const author = ref("")
 const date = ref("")
-const image = ref("") // Featured image for blog
-const imagePreview = ref("") // For showing uploaded image preview
+const avatar = ref("")
 
 const submitBlog = async () => {
-  // Validation
   if (!title.value || !description.value || !author.value || !date.value) {
     showToast("❌ Please fill all required fields!", "error")
     return
@@ -95,101 +153,96 @@ const submitBlog = async () => {
   const { error } = await supabase.from("blogs").insert([
     {
       title: title.value,
+      image: previewImage.value,
       description: description.value,
-      image: image.value, // This will be the public URL from blogs bucket
       content: editor.value.getHTML(),
       author: author.value,
       date: date.value,
+      avatar: avatar.value,
     },
   ])
 
   if (error) {
-    console.error('Blog submission error:', error)
+    console.error("Blog submission error:", error)
     showToast("❌ Failed to publish blog!", "error")
   } else {
     showToast("✅ Blog published successfully!", "success")
-    // Reset form
     title.value = ""
+    previewImage.value = ""
     description.value = ""
     author.value = ""
     date.value = ""
-    image.value = ""
-    imagePreview.value = ""
+    avatar.value = ""
     editor.value.commands.setContent("<p></p>")
   }
 }
 
-// Featured image upload handler (uploads to 'blogs' bucket)
-const featuredImageInput = ref(null)
+// Avatar upload
+const avatarInput = ref(null)
 
-const triggerFeaturedImageUpload = () => {
-  featuredImageInput.value.click()
-}
-
-const handleFeaturedImageUpload = async (event) => {
+const handleAvatarUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
 
-  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`
+  const fileName = `avatar-${Date.now()}-${file.name.replace(/\s+/g, "_")}`
 
-  // Upload to 'blogs' bucket
   const { error: uploadError } = await supabase.storage
-      .from("blogs")
+      .from("avatars")
       .upload(fileName, file, { upsert: true })
 
   if (uploadError) {
-    console.error('Upload error:', uploadError)
-    showToast("❌ Failed to upload featured image!", "error")
+    console.error("Avatar upload error:", uploadError)
+    showToast("❌ Failed to upload avatar!", "error")
     return
   }
 
-  // Get public URL
   const { data: publicUrlData } = supabase.storage
-      .from("blogs")
+      .from("avatars")
       .getPublicUrl(fileName)
 
-  image.value = publicUrlData.publicUrl
-  imagePreview.value = publicUrlData.publicUrl
-  showToast("✅ Featured image uploaded!", "success")
+  avatar.value = publicUrlData.publicUrl
+  showToast("✅ Avatar uploaded!", "success")
 }
 
-// Content images upload handler (for images inside the editor)
+// Content images upload (manual button)
 const fileInput = ref(null)
-
-const triggerFileUpload = () => {
-  fileInput.value.click()
-}
+const triggerFileUpload = () => fileInput.value.click()
 
 const handleFileUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
+  const imageUrl = await uploadImageToSupabase(file)
+  if (!imageUrl) return
+  editor.value.chain().focus().setImage({ src: imageUrl }).run()
+  showPopup.value = false
+}
 
-  const fileName = `content-${Date.now()}-${file.name.replace(/\s+/g, "_")}`
+// Preview image upload (using images bucket)
+const previewImageInput = ref(null)
+const previewImage = ref("")
+
+const handlePreviewImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const fileName = `preview-${Date.now()}-${file.name.replace(/\s+/g, "_")}`
 
   const { error: uploadError } = await supabase.storage
-      .from("images")
+      .from("images")  // Changed from "blog-images" to "images"
       .upload(fileName, file, { upsert: true })
 
   if (uploadError) {
-    console.error('Content image upload error:', uploadError)
-    showToast("❌ Failed to upload image!", "error")
+    console.error("Preview image upload error:", uploadError)
+    showToast("❌ Failed to upload preview image!", "error")
     return
   }
 
-  // Get public URL
   const { data: publicUrlData } = supabase.storage
-      .from("images")
+      .from("images")  // Changed here too
       .getPublicUrl(fileName)
 
-  const imageUrl = publicUrlData.publicUrl
-
-  // Insert image into editor
-  editor.value
-      .chain()
-      .focus()
-      .setImage({ src: imageUrl })
-      .run()
-  showPopup.value = false
+  previewImage.value = publicUrlData.publicUrl
+  showToast("✅ Preview image uploaded!", "success")
 }
 
 // Formatting helpers
@@ -233,49 +286,42 @@ const toggleHeading2 = () => {
         class="w-full text-2xl md:text-3xl font-bold py-2 focus:ring-0 outline-none border-b border-gray-300"
     />
 
-    <!-- Description -->
-    <textarea
-        v-model="description"
-        placeholder="Brief description of your blog post..."
-        rows="2"
-        class="w-full text-base md:text-xl placeholder:text-gray-500 py-2 font-semibold border-0 focus:ring-0 outline-none border-b border-gray-300 resize-none"
-    ></textarea>
-
-    <!-- Featured Image Upload -->
-    <div class="w-full flex flex-col">
+    <!-- Preview Image -->
+    <div class="w-full md:flex-1 flex flex-col items-center">
       <input
-          ref="featuredImageInput"
+          ref="previewImageInput"
           type="file"
           accept="image/*"
-          @change="handleFeaturedImageUpload"
+          @change="handlePreviewImageUpload"
           class="hidden"
       />
 
       <button
           type="button"
-          @click="triggerFeaturedImageUpload"
-          class="w-full border-b flex justify-center items-center border-gray-300 px-4 py-2 text-gray-600 font-medium outline-0"
+          @click="$refs.previewImageInput.click()"
+          class="w-full border-b flex justify-start border-gray-300 px-1 py-2 text-gray-600 font-semibold text-xl outline-0"
       >
-        <ImageIcon class="w-5 h-5 mr-1"/> Upload Featured Image
+        <ImageIcon class="w-5 h-5 mt-1 mr-1"/> Preview Image
       </button>
 
-      <!-- Image Preview -->
-      <img
-          v-if="imagePreview"
-          :src="imagePreview"
-          alt="Featured image preview"
-          class="mt-3 w-32 h-32 rounded object-cover mx-auto"
-      />
+
     </div>
 
-    <!-- Editor with custom + button -->
+    <!-- Description -->
+    <input
+        v-model="description"
+        placeholder="Brief description of your blog..."
+        class="w-full md:text-xl placeholder:text-gray-500 py-2 font-semibold border-0 focus:ring-0 outline-none border-b border-gray-300"
+    >
+
+    <!-- Editor -->
     <div class="relative">
       <!-- + Button -->
       <button
           ref="buttonRef"
           @click="showPopup = !showPopup"
           class="absolute -left-14 w-10 h-10 rounded-full bg-gradient-to-br from-black to-gray-700
-         text-white shadow-lg hover:scale-110 hover:shadow-xl hover:from-gray-800 hover:to-black
+          text-white shadow-lg hover:scale-110 hover:shadow-xl hover:from-gray-800 hover:to-black
           flex items-center justify-center text-2xl font-bold"
           :style="plusButtonStyle"
       >
@@ -298,7 +344,6 @@ const toggleHeading2 = () => {
         >
           <Bold class="w-4 h-4" />
         </button>
-
         <button
             @click="toggleItalic"
             :class="[
@@ -308,7 +353,6 @@ const toggleHeading2 = () => {
         >
           <Italic class="w-4 h-4" />
         </button>
-
         <button
             @click="toggleHeading2"
             :class="[
@@ -318,7 +362,6 @@ const toggleHeading2 = () => {
         >
           <Heading2 class="w-4 h-4" />
         </button>
-
         <button
             @click="toggleQuote"
             :class="[
@@ -328,16 +371,12 @@ const toggleHeading2 = () => {
         >
           ""
         </button>
-
-        <!-- Content Image -->
         <button
             @click="triggerFileUpload"
             class="w-8 h-8 flex items-center justify-center rounded-full transition hover:bg-gray-200"
         >
           <ImageIcon class="w-4 h-4" />
         </button>
-
-        <!-- Hidden file input for content images -->
         <input
             type="file"
             ref="fileInput"
@@ -347,7 +386,6 @@ const toggleHeading2 = () => {
         />
       </div>
 
-      <!-- Editor -->
       <div
           class="prose max-w-none py-3 rounded-md min-h-[200px] md:min-h-[250px] text-base md:text-xl border-b border-gray-300"
       >
@@ -355,7 +393,7 @@ const toggleHeading2 = () => {
       </div>
     </div>
 
-    <!-- Footer - Author & Date -->
+    <!-- Footer - Author, Date & Avatar -->
     <div
         class="flex flex-col md:flex-row w-full items-center justify-between md:space-x-6 space-y-2 md:space-y-0 py-2 font-semibold text-xl md:text-lg"
     >
@@ -377,9 +415,34 @@ const toggleHeading2 = () => {
             class="w-full border-b text-center border-gray-300 px-4 py-2 text-gray-600 outline-0"
         />
       </div>
+
+      <!-- Avatar -->
+      <div class="w-full md:flex-1 flex flex-col items-center">
+        <input
+            ref="avatarInput"
+            type="file"
+            accept="image/*"
+            @change="handleAvatarUpload"
+            class="hidden"
+        />
+
+        <button
+            type="button"
+            @click="$refs.avatarInput.click()"
+            class="w-full border-b flex justify-center border-gray-300 px-4 py-2 text-gray-600 font-medium outline-0"
+        >
+          <ImageIcon class="w-5 h-5 mt-1 mr-1"/>Avatar
+        </button>
+
+        <img
+            v-if="avatar"
+            :src="avatar"
+            alt="Avatar preview"
+            class="mt-3 w-20 h-20 rounded-full object-cover"
+        />
+      </div>
     </div>
 
-    <!-- Publish Button -->
     <div class="flex justify-end">
       <button
           @click="submitBlog"
@@ -434,7 +497,7 @@ const toggleHeading2 = () => {
   padding-left: 1em;
   font-style: italic;
   font-weight: 500;
-  quotes: """ """ "'" "'";
+  quotes: "\"\"" "\"\"" "'" "'";
 }
 .ProseMirror blockquote:before {
   content: open-quote;
