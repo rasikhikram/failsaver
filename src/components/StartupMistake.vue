@@ -14,7 +14,7 @@ const props = defineProps({
     </h1>
 
     <!-- Author section with avatar (like Failory) -->
-    <div class="flex items-center justify-center space-x-4 mb-8">
+    <div class="flex items-center justify-center space-x-4">
       <!-- Avatar -->
       <img
           v-if="blog.avatar"
@@ -48,14 +48,14 @@ const props = defineProps({
     </div>
 
     <!-- Main Content -->
-    <div class="lg:mt-16 mt-4 prose max-w-none">
+    <div class="prose max-w-none">
       <div v-html="blog.content" class="post-content text-2xl"></div>
     </div>
   </article>
 
   <!-- More Posts Section -->
   <div class="my-10">
-    <MorePosts />
+    <MorePosts :excludeId="blog.id"/>
   </div>
 </template>
 

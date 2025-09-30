@@ -1,0 +1,38 @@
+---
+// src/pages/interviewdetail/[id].astro
+import { supabase } from "../../lib/supabase.js";
+import InterviewDetail from "../../components/InterviewDetail.vue";
+import Layout from "../../layouts/Layout.astro";
+
+// Add this function for dynamic routes
+export async function getStaticPaths() {
+    const { data: posts } = await supabase
+        .from("posts")
+        .select("id");
+
+    return posts.map((post) => ({
+        params: { id: post.id.toString() }
+    }));
+}
+
+const { id } = Astro.params;
+
+// Fetch the specific post by id
+const { data: post, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+if (error || !post) {
+    return Astro.redirect("/404");
+}
+---
+
+<Layout>
+    {post ? (
+            <InterviewDetail post={post} client:load />
+    ) : (
+            <p>No post found.</p>
+    )}
+</Layout>
