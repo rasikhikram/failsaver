@@ -23,14 +23,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="w-full max-w-7xl mx-auto p-6">
+  <div class="max-w-7xl mx-auto p-6">
     <div v-if="loading" class="text-center py-8">
       <div class="text-3xl font-bold">Loading your dashboard...</div>
     </div>
 
     <div v-else>
       <!-- User Welcome Section -->
-      <div class="w-full flex flex-col items-center justify-center text-center space-y-4 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl mb-8">
+      <div class="flex flex-col items-center justify-center text-center space-y-4 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl mb-8">
         <h1 class="text-6xl font-extrabold">Welcome to FailSaver!</h1>
         <p class="text-xl text-gray-700">
           Logged in as: <span class="font-semibold">{{ props.user?.email }}</span>

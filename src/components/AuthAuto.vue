@@ -86,12 +86,12 @@ async function logout() {
 </script>
 
 <template>
-  <div>
+  <div class="max-w-7xl mx-auto ">
     <template v-if="!isLoggedIn">
       <!-- Your existing sign in form stays exactly the same -->
       <form
           @submit.prevent="handleSubmit"
-          class="max-w-7xl mx-auto flex flex-col items-center justify-center space-y-6">
+          class="flex flex-col items-center justify-center space-y-6">
         <h1 class="text-6xl font-extrabold">Sign In</h1>
         <input
             class="w-88 text-center text-xl font-semibold border-3 p-1 border-gray-500 rounded-md border border-gray-300 focus:outline-none placeholder:text-gray-500"

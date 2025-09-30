@@ -7,7 +7,7 @@ import Image from "@tiptap/extension-image"
 import { createClient } from "@supabase/supabase-js"
 import { Plugin } from "prosemirror-state"
 
-import { Bold, Italic, Heading2, Image as ImageIcon } from "lucide-vue-next"
+import { Bold, Italic, Heading2, Image as ImageIcon, List } from "lucide-vue-next"
 
 const supabase = createClient(
     import.meta.env.PUBLIC_SUPABASE_URL,
@@ -270,10 +270,17 @@ const toggleHeading2 = () => {
     showPopup.value = false
   }
 }
+const toggleBulletList = () => {
+  if (editor.value) {
+    editor.value.chain().focus().toggleBulletList().run()
+    showPopup.value = false
+  }
+}
+
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto py-8 px-3 space-y-6">
+  <div class="w-full max-w-7xl mx-auto py-8 space-y-6 border-b border-gray-300">
     <h1 class="flex items-center justify-center text-3xl lg:text-6xl font-extrabold mb-12">
       Add New Blog
     </h1>
@@ -283,7 +290,7 @@ const toggleHeading2 = () => {
         v-model="title"
         type="text"
         placeholder="Blog Title"
-        class="w-full text-2xl md:text-3xl font-bold py-2 focus:ring-0 outline-none border-b border-gray-300"
+        class="w-full text-2xl md:text-3xl font-bold py-2 focus:ring-0 outline-none border-b border-gray-300 placeholder:text-gray-500"
     />
 
     <!-- Preview Image -->
@@ -299,7 +306,7 @@ const toggleHeading2 = () => {
       <button
           type="button"
           @click="$refs.previewImageInput.click()"
-          class="w-full border-b flex justify-start border-gray-300 px-1 py-2 text-gray-600 font-semibold text-xl outline-0"
+          class="w-full border-b flex justify-start border-gray-300 px-1 py-2 text-gray-500 font-semibold text-xl outline-0"
       >
         <ImageIcon class="w-5 h-5 mt-1 mr-1"/> Preview Image
       </button>
@@ -372,6 +379,16 @@ const toggleHeading2 = () => {
           ""
         </button>
         <button
+            @click="toggleBulletList"
+            :class="[
+            'w-8 h-8 flex items-center justify-center rounded-full transition',
+            editor?.isActive('bulletList') ? 'bg-black text-white' : 'hover:bg-gray-200'
+          ]"
+        >
+          <List class="w-4 h-4" />
+        </button>
+
+        <button
             @click="triggerFileUpload"
             class="w-8 h-8 flex items-center justify-center rounded-full transition hover:bg-gray-200"
         >
@@ -395,14 +412,14 @@ const toggleHeading2 = () => {
 
     <!-- Footer - Author, Date & Avatar -->
     <div
-        class="flex flex-col md:flex-row w-full items-center justify-between md:space-x-6 space-y-2 md:space-y-0 py-2 font-semibold text-xl md:text-lg"
+        class="flex flex-col md:flex-row w-full items-center justify-between md:space-x-4 space-y-2 md:space-y-0 py-2 font-semibold text-xl md:text-lg"
     >
       <!-- Author -->
       <div class="w-full md:flex-1 flex flex-col">
         <input
             v-model="author"
             type="text"
-            placeholder="Author Name"
+            placeholder="Author"
             class="w-full text-center placeholder:text-gray-600 border-b border-gray-300 px-4 py-2 outline-0"
         />
       </div>
@@ -513,4 +530,13 @@ const toggleHeading2 = () => {
   height: auto;
   border-radius: 12px;
 }
+.ProseMirror ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  padding-left: 1rem;
+}
+.ProseMirror ul li {
+  margin: 0.3rem 0;
+}
+
 </style>

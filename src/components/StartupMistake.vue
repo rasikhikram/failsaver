@@ -87,4 +87,23 @@ const props = defineProps({
   margin: 1.5em 0;
   justify-self: center;
 }
+.post-content ul {
+  list-style-type: disc; /* bullet points */
+  margin: 1em 0;
+  padding-left: 2em; /* thoda andar shift */
+  font-size: 1.25rem; /* same as text-2xl */
+  line-height: 1.6;
+}
+
+.post-content ol {
+  list-style-type: decimal; /* numbered list */
+  margin: 1em 0;
+  padding-left: 2em;
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.post-content li {
+  margin: 0.5em 0; /* har item ke beech spacing */
+}
 </style>

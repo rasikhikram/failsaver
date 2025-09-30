@@ -6,7 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder"
 import Image from "@tiptap/extension-image"
 import { createClient } from "@supabase/supabase-js"
 
-import { Bold, Italic, Heading2, Image as ImageIcon } from "lucide-vue-next"
+import { Bold, Italic, Heading2, Image as ImageIcon, List } from "lucide-vue-next"
 
 const supabase = createClient(
     import.meta.env.PUBLIC_SUPABASE_URL,
@@ -200,6 +200,12 @@ const toggleHeading2 = () => {
     showPopup.value = false
   }
 }
+const toggleBulletList = () => {
+  if (editor.value) {
+    editor.value.chain().focus().toggleBulletList().run()
+    showPopup.value = false
+  }
+}
 </script>
 
 <template>
@@ -296,6 +302,17 @@ const toggleHeading2 = () => {
         >
           “”
         </button>
+
+        <button
+            @click="toggleBulletList"
+            :class="[
+            'w-8 h-8 flex items-center justify-center rounded-full transition',
+            editor?.isActive('bulletList') ? 'bg-black text-white' : 'hover:bg-gray-200'
+          ]"
+        >
+          <List class="w-4 h-4" />
+        </button>
+
 
         <!-- Image -->
         <button
@@ -446,5 +463,13 @@ const toggleHeading2 = () => {
   width: 400px;
   height: auto;
   border-radius: 12px;
+}
+.ProseMirror ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  padding-left: 1rem;
+}
+.ProseMirror ul li {
+  margin: 0.3rem 0;
 }
 </style>
